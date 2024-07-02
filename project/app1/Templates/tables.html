@@ -1,0 +1,201 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>Admin Tables</title>
+    <!-- Custom fonts for this template -->
+    <link href="{% static 'vendor/fontawesome-free/css/all.min.css' %}" rel="stylesheet" type="text/css">
+    <link
+        href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
+        rel="stylesheet">
+    <link href="{% static 'css/sb-admin-2.min.css' %}" rel="stylesheet">
+    <!-- Custom styles for this page -->
+    <link href="{% static 'vendor/datatables/dataTables.bootstrap4.min.css' %}" rel="stylesheet">
+</head>
+
+<body id="page-top">
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+        <!-- Sidebar -->
+        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+            <!-- Sidebar - Brand -->
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="/">
+                <div class="sidebar-brand-icon rotate-n-15">
+                    <i class="fas fa-laugh-wink"></i>
+                </div>
+                <div class="sidebar-brand-text mx-3">Admin dashboard</div>
+            </a>
+            <!-- Divider -->
+            <hr class="sidebar-divider my-0">
+            <!-- Nav Item - Dashboard -->
+            <li class="nav-item">
+                <a class="nav-link" href="/">
+                    <i class="fas fa-fw fa-tachometer-alt"></i>
+                    <span>Dashboard</span></a>
+            </li>
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+            <!-- Heading -->
+            <div class="sidebar-heading">
+                Interface
+            </div>
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+            </li>
+            
+            <!-- Nav Item - Tables -->
+            <li class="nav-item">
+                <a class="nav-link" href="/table" , target="_blank">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        class="bi bi-table" viewBox="0 0 16 16">
+                        <path
+                            d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm15 2h-4v3h4zm0 4h-4v3h4zm0 4h-4v3h3a1 1 0 0 0 1-1zm-5 3v-3H6v3zm-5 0v-3H1v2a1 1 0 0 0 1 1zm-4-4h4V8H1zm0-4h4V4H1zm5-3v3h4V4zm4 4H6v3h4z" />
+                    </svg>
+                    <span>Tables</span></a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/create_user">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        class="bi bi-person-circle" viewBox="0 0 16 16">
+                        <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0" />
+                        <path fill-rule="evenodd"
+                            d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1" />
+                    </svg>
+                    <span>create a new user</span></a>
+            </li>
+            <!-- Divider -->
+            <hr class="sidebar-divider d-none d-md-block">
+        </ul>
+        <!-- End of Sidebar -->
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column">
+            <!-- Main Content -->
+            <div id="content">
+                <!-- Topbar -->
+                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+                    <div class="col-md-6">
+                        <input type="text" id="searchInput" class="form-control"
+                            placeholder="Search by ID or Raised By">
+                    </div>
+                    <div class="col-md-6 text-right">
+                        <button class="btn btn-success" onclick="applyFilters()">Apply Filters</button>
+                        <button class="btn btn-primary btn-clear-filters" onclick="clearFilters()">Clear
+                            Filters</button>
+                        </div>
+                </nav>
+
+                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+                    <div class="col-md-12 text-right">
+                        <form method="get" action="{% url 'table' %}">
+                            <select class="col-md-9 " name="status">
+                                <option value="">All</option>
+                                {% for status, label in status_choices %}
+                                <option value="{{ status }}" {% if selected_status == status %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-success">Apply Filters</button>
+                            <a href="{% url 'table' %}" class="btn btn-primary btn-clear-filters">Clear Filters</a>
+                        </form>
+                    </div>
+
+                </nav>
+
+
+                
+                <!-- End of Topbar -->
+                <!-- Begin Page Content -->
+                <div class="container-fluid">
+                    <!-- DataTales Example -->
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">complaints</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Title</th>
+                                            <th>Department</th>
+                                            <th>Email</th>
+                                            <th>phone number</th>
+                                            <th>Raised by</th>
+                                            <th>status</th>
+                                            <th>Raised date</th>
+                                            <th>Assigned to</th>
+                                            <th>File</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="complaintsBody">
+                                        <!-- Complaints will be dynamically added here -->
+                                        {% for complaint in complaints %}
+                                        <tr>
+                                            <td>{{ complaint.id }}</td>
+                                            <td>{{ complaint.title }}</td>
+                                            <td>{{ complaint.department }}</td>
+                                            <td>{{ complaint.Email }}</td>
+                                            <td>{{ complaint.Phone_number }}</td>
+                                            <td>{{ complaint.raised_by }}</td>
+                                            <td>{{ complaint.status }}</td>
+                                            <td>{{ complaint.raised_at }}</td>
+                                            <td>{{ complaint.assigned_to }}</td>
+                                        <td> <a href="{% url 'view_file' complaint.image.path %}">view file</a></td>
+
+                                            <td><a href="{% url 'assign' complaint.id %}" target="_blank"><i
+                                                        class="fa fa-user" aria-hidden="true">Assign</i></a></td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Bootstrap core JavaScript-->
+                <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
+                <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+                <!-- Core plugin JavaScript-->
+                <script src="{% static 'vendor/jquery-easing/jquery.easing.min.js' %}"></script>
+                <!-- Custom scripts for all pages-->
+                <script src="{% static 'js/sb-admin-2.min.js' %}"></script>
+                <!-- Page level plugins -->
+                <script src="{% static 'vendor/datatables/jquery.dataTables.min.js' %}"></script>
+                <script src="{% static 'vendor/datatables/dataTables.bootstrap4.min.js' %}"></script>
+                <!-- Page level custom scripts -->
+                <script src="{% static 'js/demo/datatables-demo.js' %}"></script>
+</body>
+<!-- Add jQuery library -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    function clearFilters() {
+        // Clear the search input
+        $('#searchInput').val('');
+        // Reload the page
+        window.location.reload();
+    }
+
+    function applyFilters() {
+        var searchText = $('#searchInput').val().toLowerCase();
+        // Loop through the table rows and hide/show based on the search text
+        $('#dataTable tbody tr').each(function () {
+            var rowText = $(this).text().toLowerCase();
+            if (rowText.includes(searchText)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    }
+</script>
+
+
+</html>
