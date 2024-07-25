@@ -1,7 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -25,7 +24,6 @@
         }
     </style>
 </head>
-
 <body>
     <div class="container">
         <div class="row justify-content-center">
@@ -49,13 +47,12 @@
                                     <form class="user" action="{% url 'worker_login' %}" method="POST">
                                         {% csrf_token %}
                                         <div class="form-group">
-                                            <input type="text" class="form-control form-control-user"
-                                                id="exampleInputID" placeholder="Enter ID..." name="id" required>
+                                            <input type="email" class="form-control form-control-user"
+                                                id="exampleInputEmail" placeholder="Enter Email..." name="email" required>
                                         </div>
                                         <div class="form-group">
-                                            <input type="email" class="form-control form-control-user"
-                                                id="exampleInputEmail" aria-describedby="emailHelp"
-                                                placeholder="Enter Email Address..." name="email" required>
+                                            <input type="password" class="form-control form-control-user"
+                                                id="exampleInputPassword" placeholder="Enter Password..." name="password" required>
                                         </div>
                                         <button type="submit" class="btn btn-primary btn-user btn-block">
                                             Login
@@ -71,5 +68,4 @@
         </div>
     </div>
 </body>
-
 </html>

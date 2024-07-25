@@ -1,14 +1,18 @@
 from django.shortcuts import render, HttpResponse, redirect
 from .models import Complaint, Department, Assign
-from django.contrib.auth import logout, login, authenticate
+from django.contrib.auth import logout, login, authenticate, update_session_auth_hash
 from django.shortcuts import render, redirect,HttpResponse
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import login as auth_login, aauthenticate, get_backends
 from django.urls import reverse
 from django.contrib import messages
+from django.utils import timezone
 import os
+from django.core.exceptions import ValidationError
+from datetime import datetime
 from django.conf import settings
+from django.contrib.auth.hashers import check_password, make_password
 from django.shortcuts import render, get_object_or_404
-from django.core.files.storage import FileSystemStorage
  
 
 
@@ -75,6 +79,13 @@ def complaint_success(request, complaint_id):
     complaint = Complaint.objects.get(id=complaint_id)
     return HttpResponse(f"Complaint submitted successfully. Complaint number is: {complaint.id}")
 
+def complaint_detail(request, complaint_id):
+    complaint = get_object_or_404(Complaint, id=complaint_id)
+    context = {
+        'complaint': complaint
+    }
+    return render(request, 'complaint_details.html', context)
+
 ##########################--------------ADMIN VIEWS----------------------###############################
 
 @login_required(login_url='login')
@@ -103,15 +114,19 @@ def assigned_success(request, complaint_id, username):
 
 
 def assign(request, complaint_id):
-    complaint = Complaint.objects.get(id=complaint_id)
+    complaint = get_object_or_404(Complaint, id=complaint_id)
     users = Assign.objects.all()  # Fetch all users from the Assign model
     if request.method == 'POST':
         assigned_to_name = request.POST.get('assigned_to')  # Get the selected name from the form
-        assigned_to = Assign.objects.get(name=assigned_to_name)  # Retrieve the Assign instance corresponding to the selected name
+        assigned_to = get_object_or_404(Assign, name=assigned_to_name)  # Retrieve the Assign instance corresponding to the selected name
+        
+        # Update the complaint status and assigned_to fields
         complaint.status = 'Allotted'
         complaint.assigned_to = assigned_to
+        complaint.date_alloted = timezone.now()  # Set the date_alloted field to the current time
         complaint.save()
-        # Redirect to assigned.html
+        
+        # Redirect to a success page or any other page you need
         return redirect('assigned_success', complaint_id=complaint.id, username=assigned_to_name)
     
     return render(request, 'assign.html', {'complaint': complaint, 'users': users})
@@ -226,26 +241,187 @@ def user_logout(request):
 ##########################--------------WORKER VIEWS----------------------###############################
 
 def worker_login(request):
+    if request.user.is_authenticated:
+        return redirect(reverse('worker_dashboard'))
+    
     if request.method == 'POST':
-        email = request.POST.get('email')
-        id = request.POST.get('id')
-        user = authenticate(request, email=email, id=id)
+        email = request.POST['email']
+        password = request.POST['password']
+        
+        # Authenticate the user
+        user = authenticate(request, username=email, password=password)
+        
         if user is not None:
-            login(request, user, backend='app1.authentication_backends.AssignBackend')
-            return redirect('worker_dashboard')
+            if user.is_active:
+                auth_login(request, user)
+                return redirect(reverse('worker_dashboard'))
+            else:
+                messages.error(request, 'Your account is inactive.')
         else:
-            messages.error(request, 'Invalid credentials. Please try again.')
+            messages.error(request, 'Invalid email or password.')
+    
     return render(request, 'worker_login.html')
 
-@login_required
+
+
+@login_required(login_url='worker_login')
 def worker_dashboard(request):
-    user = request.user
+    if request.user.is_authenticated:
+        try:
+            current_assign = Assign.objects.get(user=request.user)
+        except Assign.DoesNotExist:
+            current_assign = None
+
+        if current_assign:
+            # Fetch complaints for the assigned person
+            resolved_complaints = Complaint.objects.filter(assigned_to=current_assign, status='Resolved')
+            pending_complaints = Complaint.objects.filter(assigned_to=current_assign, status='Allotted')
+            in_progress_complaints = Complaint.objects.filter(assigned_to=current_assign, status='In Progress')
+
+            resolved_count = resolved_complaints.count()
+            pending_count = pending_complaints.count()
+            in_progress_count = in_progress_complaints.count()
+        else:
+            resolved_complaints = []
+            pending_complaints = []
+            in_progress_complaints = []
+            resolved_count = 0
+            pending_count = 0
+            in_progress_count = 0
+
+        context = {
+            'assign': current_assign,
+            'resolved_count': resolved_count,
+            'pending_count': pending_count,
+            'in_progress_count': in_progress_count,
+            'resolved_complaints': resolved_complaints,
+            'pending_complaints': pending_complaints,
+            'in_progress_complaints': in_progress_complaints,
+        }
+        return render(request, 'worker_dashboard.html', context)
+    else:
+        return render(request, 'worker_login.html')
+    
+
+@login_required(login_url='worker_login')
+def worker_profile(request):
     try:
-        worker = Assign.objects.get(email=user.email)
+        assign = Assign.objects.get(user=request.user)
     except Assign.DoesNotExist:
-        worker = None
+        messages.error(request, "User profile not found.")
+        return redirect('worker_login')
+
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        dob = request.POST.get('dob')
+        department_id = request.POST.get('department')
+        phone_number = request.POST.get('phone_number')
+        profile_picture = request.FILES.get('profile_picture')
+        new_password = request.POST.get('password')
+
+        if name:
+            assign.name = name
+        if email:
+            assign.email = email
+        if dob:
+            try:
+                assign.dob = datetime.strptime(dob, '%Y-%m-%d').date()
+            except ValueError:
+                messages.error(request, "Invalid date format. It must be in YYYY-MM-DD format.")
+                return redirect('worker_profile')
+        if department_id:
+            try:
+                department = Department.objects.get(id=department_id)
+                assign.department = department
+            except Department.DoesNotExist:
+                messages.error(request, "Invalid department.")
+                return redirect('worker_profile')
+        if phone_number:
+            assign.phone_number = phone_number
+        if profile_picture:
+            assign.profile_picture = profile_picture
+        if new_password:
+            assign.user.set_password(new_password)  # Hash the new password
+            assign.user.save()
+            update_session_auth_hash(request, assign.user)  # Keep the user logged in after password change
+
+        assign.save()
+        messages.success(request, 'Profile updated successfully!')
+        return redirect('worker_profile')
+
+    else:
+        departments = Department.objects.all()
+        return render(request, 'worker_profile.html', {'assign': assign, 'departments': departments})
+
+@login_required(login_url='worker_login')   
+def worker_resolved_complaints(request):
+    current_assign = request.user.assign
+    resolved_complaints = Complaint.objects.filter(assigned_to=current_assign, status='Resolved')
+    
+    context = {
+        'resolved_complaints': resolved_complaints
+    }
+    
+    return render(request, "worker_resolved_complaints.html", context)
+
+@login_required(login_url='worker_login')
+def worker_pending_complaints(request):
+    current_assign = request.user.assign
+    pending_complaints = Complaint.objects.filter(assigned_to=current_assign, status='Allotted')
+
+    if request.method == 'POST':
+        complaint_id = request.POST.get('complaint_id')
+        action = request.POST.get('action')
+        complaint = get_object_or_404(Complaint, id=complaint_id)
+
+        if action == 'accept':
+            complaint.status = 'In Progress'
+            complaint.date_started=timezone.now()
+        elif action == 'reject':
+            complaint.status = 'Rejected'    
+        complaint.save()
+
+        return redirect('worker_pending_complaints')
 
     context = {
-        'worker': worker
+        'pending_complaints': pending_complaints
     }
-    return render(request, 'worker_dashboard.html', context)
+    
+    return render(request, "worker_pending_complaints.html", context)
+
+@login_required(login_url='worker_login')
+def worker_in_progress_complaints(request):
+    current_assign = request.user.assign
+    in_progress_complaints = Complaint.objects.filter(assigned_to=current_assign, status='In Progress')
+
+    if request.method == 'POST':
+        complaint_id = request.POST.get('complaint_id')
+        action = request.POST.get('action')
+        complaint = get_object_or_404(Complaint, id=complaint_id)
+
+        if action == 'resolve':
+            complaint.status = 'Resolved'
+            complaint.date_resolved=timezone.now()
+        elif action == 'reject':
+            complaint.status = 'Rejected'
+        complaint.save()
+
+        return redirect('worker_in_progress_complaints')
+
+    context = {
+        'in_progress_complaints': in_progress_complaints
+    }
+    return render(request, "worker_in_progress_complaints.html",context)
+
+
+
+
+@login_required(login_url='worker_login')    
+def worker_success_profile(request):
+    return render(request,"worker_success_profile.html")
+
+def worker_logout(request):
+    logout(request)
+    messages.success(request, "You have successfully logged out.")
+    return redirect('worker_login')

@@ -3,14 +3,13 @@
 <html lang="en">
 
 <head>
-
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Admin Tables</title>
+    <title>Admin Assign Complaint</title>
 
     <!-- Custom fonts for this template -->
     <link href="{% static 'vendor/fontawesome-free/css/all.min.css' %}" rel="stylesheet" type="text/css">
@@ -30,11 +29,9 @@
     <div id="wrapper">
 
         <!-- Sidebar -->
-
         <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
 
             <!-- Sidebar - Brand -->
-
             <a class="sidebar-brand d-flex align-items-center justify-content-center" href="/">
                 <div class="sidebar-brand-icon rotate-n-15">
                     <i class="fas fa-laugh-wink"></i>
@@ -61,11 +58,10 @@
             </div>
             <!-- Divider -->
             <hr class="sidebar-divider">
-            </li>
            
             <!-- Nav Item - Tables -->
             <li class="nav-item">
-                <a class="nav-link" href="/table" , target="_blank">
+                <a class="nav-link" href="/table" target="_blank">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                         class="bi bi-table" viewBox="0 0 16 16">
                         <path
@@ -82,17 +78,11 @@
                         <path fill-rule="evenodd"
                             d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1" />
                     </svg>
-                    <span>create a new user</span></a>
+                    <span>Create a new user</span></a>
             </li>
-
-
-           
 
             <!-- Divider -->
             <hr class="sidebar-divider d-none d-md-block">
-
-
-
         </ul>
         <!-- End of Sidebar -->
 
@@ -104,10 +94,9 @@
 
                 <!-- Topbar -->
                 <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
-
-                    <div class="col-md-6 text-right">
-
+                    <div class="col-md-6 text-right"></div>
                 </nav>
+
                 <!-- Begin Page Content -->
                 <div class="container-fluid">
                     <div class="card shadow mb-4">
@@ -120,8 +109,6 @@
                             <div class="table-responsive">
                                 <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                                     <tbody>
-                                        <!-- Loop through complaints -->
-                                        
                                         <tr>
                                             <td><strong>ID:</strong> {{ complaint.id }}</td>
                                         </tr>
@@ -143,45 +130,45 @@
                                         <tr>
                                             <td><strong>Raised Date:</strong> {{ complaint.raised_at }}</td>
                                         </tr>
-                                        <tr>
-                                            <td><strong>Image:</strong> {{ complaint.image }}</td>
-                                        </tr>
-                                        </tbody>
+                                        <td><strong>Image:</strong> 
+                                            {% if complaint.image %}
+                                                <img src="{{ complaint.image.url }}" alt="Complaint Image" style="max-width: 300px; max-height: 200px;">
+                                            {% else %}
+                                                No image available
+                                            {% endif %}
+                                        </td>
+                                    </tbody>
+                                </table>
+
+                                <form method="post">
+                                    {% csrf_token %}
+                                    <div class="form-group">
+                                        <label for="assigned_to">Assign to:</label>
+                                        <table class="table table-bordered mt-3">
+                                            <thead>
+                                                <tr>
+                                                    <th>Select</th>
+                                                    <th>Name</th>
+                                                    <th>Email</th>
+                                                    <th>Phone Number</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for user in users %}
+                                                <tr>
+                                                    <td>
+                                                        <input type="radio" id="user_{{ user.id }}" name="assigned_to" value="{{ user.name }}">
+                                                    </td>
+                                                    <td>{{ user.name }}</td>
+                                                    <td>{{ user.email }}</td>
+                                                    <td>{{ user.phone_number }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
                                         </table>
-
-                                        <form method="post">
-                                            {% csrf_token %}
-                                            <div class="form-group">
-                                                <label for="assigned_to">Assign to:</label>
-                                                <table class="table table-bordered mt-3">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Select</th>
-                                                            <th>Name</th>
-                                                            <th>Email</th>
-                                                            <th>Phone Number</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {% for user in users %}
-                                                        <tr>
-                                                            <td>
-                                                                <input type="radio" id="user_{{ user.id }}" name="assigned_to" value="{{ user.name }}">
-                                                            </td>
-                                                            <td>{{ user.name }}</td>
-                                                            <td>{{ user.email }}</td>
-                                                            <td>{{ user.phone_number }}</td>
-                                                        </tr>
-                                                        {% endfor %}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                            <button type="submit" class="btn btn-primary">Assign</button>
-                                        </form>
-
-
-                                        
-                                    
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Assign</button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -202,8 +189,5 @@
 
                 <!-- Page level custom scripts -->
                 <script src="{% static 'js/demo/datatables-demo.js' %}"></script>
-
-
 </body>
-
 </html>

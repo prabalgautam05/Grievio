@@ -44,7 +44,7 @@
                                 <div class="row row-space">
                                     <div class="col-2">
                                         <div class="input-group-desc">
-                                            <input class="input--style-5" type="text" name="name">
+                                            <input class="input--style-5" type="text" name="name" required>
 
                                         </div>
                                     </div>
@@ -57,7 +57,7 @@
                             <div class="name">Date of Birth</div>
                             <div class="value">
                                 <div class="input-group">
-                                    <input class="input--style-5" type="date" name="dob">
+                                    <input class="input--style-5" type="date" name="dob" required>
                                 </div>
                             </div>
                         </div>
@@ -65,7 +65,7 @@
                             <div class="name">Email</div>
                             <div class="value">
                                 <div class="input-group">
-                                    <input class="input--style-5" type="email" name="email">
+                                    <input class="input--style-5" type="email" name="email" required>
                                 </div>
                             </div>
                         </div>
@@ -89,7 +89,7 @@
                             <div class="value">
                                 <div class="input-group">
                                     <div class="rs-select2 js-select-simple select--no-search">
-                                        <select name="department">
+                                        <select name="department" required>
                                             <option disabled selected>Choose Department</option>
                                             {% for department in departments %}
                                             <option value="{{ department.id }}">{{ department.name }}</option>

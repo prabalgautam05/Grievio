@@ -33,9 +33,17 @@ urlpatterns = [
     path('assigned-success/<str:complaint_id>/<str:username>/', views.assigned_success, name='assigned_success'),
     
     #worker-urls
-    path('worker-login/', views.worker_login, name='worker_login'),
-    path('worker-dashboard/', views.worker_dashboard, name='worker_dashboard'),
-    
+    path('worker_login/', views.worker_login, name='worker_login'),
+    path('worker_logout/', views.worker_logout, name='worker_logout'),
+    path('worker_dashboard/', views.worker_dashboard, name='worker_dashboard'),
+    path('worker_resolved_complaints/', views.worker_resolved_complaints, name='worker_resolved_complaints'),
+    path('worker_pending_complaints/', views.worker_pending_complaints, name='worker_pending_complaints'),
+    path('worker_in_progress_complaints/', views.worker_in_progress_complaints, name='worker_in_progress_complaints'),
+    path('worker_profile/', views.worker_profile, name='worker_profile'),
+    path('worker_success_profile/',views.worker_success_profile,name='worker_success_profile'),
+    path('complaint/<str:complaint_id>/', views.complaint_detail, name='complaint_detail'),
+
+
     ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

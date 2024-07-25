@@ -1,5 +1,8 @@
 from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
+from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password
+
 import random
 import string
 
@@ -27,15 +30,18 @@ class Complaint(models.Model):
     id = models.CharField(max_length=16, primary_key=True)  # Define id field explicitly
     title = models.CharField(max_length=200)
     Email= models.EmailField(null=False, blank=False)
-    Phone_number=PhoneNumberField(max_length=10,null=False, blank=False)
+    Phone_number=PhoneNumberField(max_length=13,null=False, blank=False)
     description = models.TextField()
     department = models.ForeignKey(Department, on_delete=models.CASCADE)
     raised_by = models.CharField(max_length=100)
     raised_at = models.DateTimeField(auto_now_add=True)
+    date_alloted = models.DateTimeField(null=True, blank=True)
+    date_started = models.DateTimeField(null=True, blank=True)
+    date_resolved = models.DateTimeField(null=True, blank=True)
     resolution_time = models.CharField(max_length=20, choices=RESOLUTION_CHOICES, default='Normal')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     assigned_to = models.ForeignKey('assign',on_delete=models.CASCADE, null=True, blank=True)
-    image = models.FileField(upload_to='complaint_images/', null=True, blank=True)
+    image = models.FileField(upload_to='complaint_images/', null=False, blank=False, default=FileNotFoundError)
     
     def __str__(self):
         return f"Complaint ID: {self.pk}"
@@ -63,9 +69,7 @@ class Assign(models.Model):
     department = models.ForeignKey('Department', on_delete=models.SET_NULL, null=True, blank=True)
     phone_number = models.CharField(max_length=13, unique=True)
     profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
-
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['dob']
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='assign', null=True, blank=True)
 
     class Meta:
         # Add this to prevent clashes with auth.User's groups and user_permissions
@@ -74,6 +78,28 @@ class Assign(models.Model):
     def save(self, *args, **kwargs):
         if not self.id:
             self.id = generate_id()
+        
+        if not self.user:
+            user = User(
+                username=self.email,
+                email=self.email,
+                first_name=self.name.split()[0] if self.name else '',
+                last_name=' '.join(self.name.split()[1:]) if len(self.name.split()) > 1 else '',
+                is_active=True,  # Ensure the user is active
+                is_staff=False
+            )
+            user.set_password('Pass123')  # Set the default password using set_password
+            user.save()
+            self.user = user
+        else:
+            # Update the existing User instance if needed
+            self.user.email = self.email
+            self.user.first_name = self.name.split()[0] if self.name else ''
+            self.user.last_name = ' '.join(self.name.split()[1:]) if len(self.name.split()) > 1 else ''
+            # Ensure password is set properly if you intend to change it
+            self.user.set_password('Pass123')  # Change password if required, ensure it's hashed properly
+            self.user.save()
+        
         super().save(*args, **kwargs)
 
     def __str__(self):
