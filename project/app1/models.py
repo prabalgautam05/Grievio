@@ -79,28 +79,28 @@ class Assign(models.Model):
         if not self.id:
             self.id = generate_id()
         
-        if not self.user:
-            user = User(
-                username=self.email,
-                email=self.email,
-                first_name=self.name.split()[0] if self.name else '',
-                last_name=' '.join(self.name.split()[1:]) if len(self.name.split()) > 1 else '',
-                is_active=True,  # Ensure the user is active
-                is_staff=False
-            )
-            user.set_password('Pass123')  # Set the default password using set_password
-            user.save()
-            self.user = user
-        else:
-            # Update the existing User instance if needed
-            self.user.email = self.email
-            self.user.first_name = self.name.split()[0] if self.name else ''
-            self.user.last_name = ' '.join(self.name.split()[1:]) if len(self.name.split()) > 1 else ''
-            # Ensure password is set properly if you intend to change it
-            self.user.set_password('Pass123')  # Change password if required, ensure it's hashed properly
-            self.user.save()
+        # if not self.user:
+        #     user = User(
+        #         username=self.email,
+        #         email=self.email,
+        #         first_name=self.name.split()[0] if self.name else '',
+        #         last_name=' '.join(self.name.split()[1:]) if len(self.name.split()) > 1 else '',
+        #         is_active=True,  # Ensure the user is active
+        #         is_staff=False
+        #     )
+        #     user.set_password()  # Set the default password using set_password
+        #     user.save()
+        #     self.user = user
+        # else:
+        #     # Update the existing User instance if needed
+        #     self.user.email = self.email
+        #     self.user.first_name = self.name.split()[0] if self.name else ''
+        #     self.user.last_name = ' '.join(self.name.split()[1:]) if len(self.name.split()) > 1 else ''
+        #     # Ensure password is set properly if you intend to change it
+        #     self.user.set_password()  # Change password if required, ensure it's hashed properly
+        #     self.user.save()
         
-        super().save(*args, **kwargs)
+        # super().save(*args, **kwargs)
 
     def __str__(self):
         return self.email

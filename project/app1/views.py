@@ -247,6 +247,7 @@ def worker_login(request):
     if request.method == 'POST':
         email = request.POST['email']
         password = request.POST['password']
+
         
         # Authenticate the user
         user = authenticate(request, username=email, password=password)
@@ -254,6 +255,7 @@ def worker_login(request):
         if user is not None:
             if user.is_active:
                 auth_login(request, user)
+                print(f"pwd{request.user.password}")
                 return redirect(reverse('worker_dashboard'))
             else:
                 messages.error(request, 'Your account is inactive.')
@@ -303,6 +305,59 @@ def worker_dashboard(request):
         return render(request, 'worker_login.html')
     
 
+# @login_required(login_url='worker_login')
+# def worker_profile(request):
+#     try:
+#         assign = Assign.objects.get(user=request.user)
+#     except Assign.DoesNotExist:
+#         messages.error(request, "User profile not found.")
+#         return redirect('worker_login')
+
+#     if request.method == 'POST':
+#         name = request.POST.get('name')
+#         email = request.POST.get('email')
+#         dob = request.POST.get('dob')
+#         department_id = request.POST.get('department')
+#         phone_number = request.POST.get('phone_number')
+#         profile_picture = request.FILES.get('profile_picture')
+#         new_password = request.POST.get('password')
+
+#         if name:
+#             assign.name = name
+#         if email:
+#             assign.email = email
+#         if dob:
+#             try:
+#                 assign.dob = datetime.strptime(dob, '%Y-%m-%d').date()
+#             except ValueError:
+#                 messages.error(request, "Invalid date format. It must be in YYYY-MM-DD format.")
+#                 return redirect('worker_profile')
+#         if department_id:
+#             try:
+#                 department = Department.objects.get(id=department_id)
+#                 assign.department = department
+#             except Department.DoesNotExist:
+#                 messages.error(request, "Invalid department.")
+#                 return redirect('worker_profile')
+#         if phone_number:
+#             assign.phone_number = phone_number
+#         if profile_picture:
+#             assign.profile_picture = profile_picture
+#         if new_password:
+#             print(f"new password{new_password}")
+#             assign.user.set_password(new_password)  # Hash the new password
+#             assign.user.save()
+#             update_session_auth_hash(request, assign.user)  # Keep the user logged in after password change
+
+#         assign.save()
+#         messages.success(request, 'Profile updated successfully!')
+#         return redirect('worker_profile')
+
+#     else:
+#         departments = Department.objects.all()
+#         return render(request, 'worker_profile.html', {'assign': assign, 'departments': departments})
+
+
 @login_required(login_url='worker_login')
 def worker_profile(request):
     try:
@@ -341,10 +396,15 @@ def worker_profile(request):
             assign.phone_number = phone_number
         if profile_picture:
             assign.profile_picture = profile_picture
+
+        print("new password: ", new_password)
         if new_password:
-            assign.user.set_password(new_password)  # Hash the new password
-            assign.user.save()
-            update_session_auth_hash(request, assign.user)  # Keep the user logged in after password change
+            request.user.set_password(new_password)  # Hash the new password
+            print(request.user.password, "##########")
+            print(f"user:{request.user}")
+            request.user.save()
+            # update_session_auth_hash(request, request.user)  # Keep the user logged in after password change
+            
 
         assign.save()
         messages.success(request, 'Profile updated successfully!')
